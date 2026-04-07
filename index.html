@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Is It South Facing? — Free UK Garden Orientation Checker</title>
+
+<!-- SEO -->
+<meta name="description" content="Find out if a UK property has a south-facing garden in seconds. Enter any address and we'll use live map data to calculate the garden's compass orientation — free, no signup needed.">
+<meta name="keywords" content="south facing garden, UK property, garden orientation checker, does my garden face south, house garden direction, property search UK">
+<meta name="author" content="Is It South Facing">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://isitsouthfacing.co.uk/">
+
+<!-- Open Graph (WhatsApp, Facebook, LinkedIn previews) -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://isitsouthfacing.co.uk/">
+<meta property="og:title" content="Is It South Facing? — Free UK Garden Orientation Checker">
+<meta property="og:description" content="Find out instantly if a UK property has a south-facing garden. Enter any address — we use live map data and building footprints to calculate the exact orientation.">
+<meta property="og:image" content="https://isitsouthfacing.co.uk/og-image.png">
+
+<!-- Twitter card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Is It South Facing? — Free UK Garden Orientation Checker">
+<meta name="twitter:description" content="Find out instantly if a UK property has a south-facing garden. Free, no signup needed.">
+
+<!-- Structured data — WebApplication schema -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Is It South Facing?",
+  "url": "https://isitsouthfacing.co.uk/",
+  "description": "A free tool to check whether a UK property has a south-facing garden, using OpenStreetMap building footprints and compass orientation data.",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "GBP" },
+  "areaServed": { "@type": "Country", "name": "United Kingdom" },
+  "keywords": "south facing garden, UK property, garden orientation, compass direction"
+}
+</script>
+
+<!-- FAQ structured data — helps Google show rich results -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What does south facing garden mean?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A south-facing garden is one where the rear of the property faces south, meaning the garden receives direct sunlight for most of the day. In the UK, south-facing gardens are highly sought after because they get the maximum amount of sunshine, especially during spring and summer."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I check if a garden is south facing?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The easiest way is to use Is It South Facing — enter the UK property address and the tool automatically calculates the garden's orientation using building footprint data from OpenStreetMap. Alternatively, you can use a compass app on your phone and stand in the garden facing the house; if you are facing north, the garden faces south."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does a south facing garden add value to a property?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. South-facing gardens are one of the most desirable property features in the UK. Estate agents consistently report that south-facing gardens can add between 5% and 10% to a property's value, as buyers are willing to pay a premium for all-day sunshine in the garden."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the best garden orientations?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "South-facing is considered the best orientation for a UK garden as it receives the most direct sunlight throughout the day. South-west and south-east facing gardens are also excellent. East-facing gardens get good morning sun, while west-facing gardens get afternoon and evening sun. North-facing gardens receive the least direct sunlight."
+      }
+    }
+  ]
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300;1,9..144,700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root {
+  --bg:        #F4F1EC;
+  --surface:   #FFFFFF;
+  --border:    #E2DDD6;
+  --text:      #1C1917;
+  --muted:     #78716C;
+  --muted2:    #A8A29E;
+  --hero-bg:   #1A1714;
+  --sun:       #F59E0B;
+  --sun-dim:   #FEF3C7;
+  --sun-mid:   #FDE68A;
+  --green:     #15803D;
+  --green-dim: #DCFCE7;
+  --red:       #DC2626;
+  --red-dim:   #FEE2E2;
+  --shadow:    0 1px 3px rgba(0,0,0,0.06), 0 4px 14px rgba(0,0,0,0.05);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: 'Figtree', sans-serif; min-height: 100vh; padding-bottom: env(safe-area-inset-bottom, 32px); }
+
+.hero { background: var(--hero-bg); padding: 48px 20px 52px; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; top: -60px; right: -60px; width: 320px; height: 320px; background: radial-gradient(circle, rgba(245,158,11,0.12) 0%, transparent 70%); pointer-events: none; }
+.hero-inner { max-width: 560px; margin: 0 auto; position: relative; }
+.hero-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 36px; }
+.wordmark { display: flex; align-items: baseline; }
+.wordmark-text { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 700; color: #FAFAF8; letter-spacing: -0.3px; }
+.wordmark-q { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 300; font-style: italic; color: var(--sun); }
+.hero-pill { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 100px; }
+.hero-title { font-family: 'Fraunces', serif; font-size: clamp(38px,9vw,56px); font-weight: 700; line-height: 1.02; letter-spacing: -2px; color: #FAFAF8; margin-bottom: 14px; }
+.hero-title em { font-style: italic; font-weight: 300; color: var(--sun); }
+.hero-sub { font-size: 15px; color: rgba(255,255,255,0.42); line-height: 1.65; margin-bottom: 32px; max-width: 380px; }
+.hero-search { display: flex; gap: 10px; margin-bottom: 10px; }
+.hero-input { flex: 1; min-width: 0; background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.12); color: #FAFAF8; font-family: 'Figtree', sans-serif; font-size: 16px; font-weight: 500; padding: 14px 16px; border-radius: 14px; outline: none; transition: border-color 0.2s, background 0.2s; }
+.hero-input:focus { border-color: var(--sun); background: rgba(255,255,255,0.1); }
+.hero-input::placeholder { color: rgba(255,255,255,0.25); font-weight: 400; }
+.hero-btn { background: var(--sun); color: #1A1714; border: none; font-family: 'Figtree', sans-serif; font-size: 15px; font-weight: 700; padding: 14px 22px; border-radius: 14px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 7px; transition: opacity 0.15s, transform 0.1s; touch-action: manipulation; flex-shrink: 0; }
+.hero-btn:hover { opacity: 0.9; }
+.hero-btn:active { transform: scale(0.97); }
+.hero-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+.hero-hint { font-size: 12px; color: rgba(255,255,255,0.25); display: flex; align-items: center; gap: 6px; }
+.hero-hint::before { content: ''; width: 3px; height: 3px; background: var(--sun); border-radius: 50%; opacity: 0.7; flex-shrink: 0; }
+
+.debug-log { margin-top: 16px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 16px; font-size: 12px; color: rgba(255,255,255,0.35); font-family: 'SF Mono','Fira Code',monospace; line-height: 2; display: none; max-height: 160px; overflow-y: auto; }
+.debug-log.show { display: block; }
+.lok { color: #4ADE80; font-weight: 600; } .lwarn { color: var(--sun); font-weight: 600; } .lerr { color: #F87171; font-weight: 600; }
+
+/* MAP */
+.map-section { max-width: 560px; margin: 0 auto; padding: 28px 20px 0; display: none; }
+.map-section.show { display: block; }
+.map-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-lg); }
+.map-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.map-header-left { display: flex; align-items: center; gap: 10px; }
+.map-pin-icon { width: 32px; height: 32px; background: var(--sun-dim); border: 1px solid var(--sun-mid); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.map-header-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.map-header-sub { font-size: 12px; color: var(--muted2); margin-top: 1px; }
+.map-confirm-btn { background: var(--text); color: #fff; border: none; font-family: 'Figtree', sans-serif; font-size: 13px; font-weight: 700; padding: 9px 18px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.15s; flex-shrink: 0; touch-action: manipulation; }
+.map-confirm-btn:hover { background: #333; }
+.map-confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+#map { height: 300px; width: 100%; }
+.map-footer { padding: 10px 18px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted2); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.map-legend { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted2); font-weight: 500; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.legend-dot.front { background: #EF4444; }
+.legend-dot.back  { background: #15803D; }
+#mapCoords { font-family: 'SF Mono','Fira Code',monospace; font-size: 10px; color: var(--muted2); white-space: nowrap; }
+
+/* CONTENT */
+.content { max-width: 560px; margin: 0 auto; padding: 28px 20px 60px; }
+
+.stats-strip { display: none; gap: 10px; margin-bottom: 24px; }
+.stats-strip.show { display: flex; }
+.stat-box { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px 12px; text-align: center; box-shadow: var(--shadow); }
+.stat-num { font-family: 'Fraunces', serif; font-size: 30px; font-weight: 700; line-height: 1; display: block; margin-bottom: 5px; }
+.stat-box.highlight .stat-num { color: var(--green); }
+.stat-box.highlight { background: var(--green-dim); border-color: #BBF7D0; }
+.stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted2); }
+
+.filter-bar { display: none; align-items: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.filter-bar.show { display: flex; }
+.filter-pill { font-family: 'Figtree', sans-serif; font-size: 13px; font-weight: 600; padding: 7px 16px; border-radius: 100px; border: 1.5px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; transition: all 0.15s; touch-action: manipulation; }
+.filter-pill.active { background: var(--hero-bg); color: #fff; border-color: var(--hero-bg); }
+.filter-pill:hover:not(.active) { border-color: var(--text); color: var(--text); }
+.filter-spacer { flex: 1; }
+.clear-btn { font-family: 'Figtree', sans-serif; font-size: 13px; font-weight: 500; color: var(--muted2); background: none; border: none; cursor: pointer; transition: color 0.15s; }
+.clear-btn:hover { color: var(--red); }
+
+.results { display: flex; flex-direction: column; gap: 14px; }
+.result-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); animation: riseIn 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+@keyframes riseIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+.result-card.south { border-color: #86EFAC; background: linear-gradient(160deg,#fff 55%,#F0FDF4); }
+
+.verdict-bar { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--border); }
+.result-card.south .verdict-bar { background: linear-gradient(90deg,#F0FDF4,#DCFCE7); border-bottom-color: #BBF7D0; }
+.verdict-left { display: flex; align-items: center; gap: 12px; }
+.verdict-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.verdict-icon.yes { background: var(--green-dim); } .verdict-icon.no { background: #F5F5F4; } .verdict-icon.unk { background: var(--sun-dim); }
+.verdict-answer { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 700; letter-spacing: -0.4px; line-height: 1.1; }
+.verdict-yes { color: var(--green); } .verdict-no { color: var(--text); } .verdict-unk { color: #92400E; }
+.verdict-label { font-size: 12px; color: var(--muted2); margin-top: 2px; }
+.dir-chip { flex-shrink: 0; text-align: center; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 8px 14px; min-width: 58px; }
+.dir-main { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 700; color: var(--text); line-height: 1; display: block; }
+.result-card.south .dir-main { color: var(--green); }
+.dir-deg { font-size: 11px; font-weight: 600; color: var(--muted2); display: block; margin-top: 2px; }
+
+.card-body { padding: 16px 20px; }
+.card-address { font-size: 15px; font-weight: 600; line-height: 1.3; margin-bottom: 3px; }
+.card-sub { font-size: 12px; color: var(--muted2); margin-bottom: 10px; line-height: 1.4; }
+.card-note { font-size: 13px; color: var(--muted); line-height: 1.55; }
+.method-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; background: var(--bg); border: 1px solid var(--border); color: var(--muted2); margin-top: 10px; }
+
+.card-footer { padding: 10px 20px 14px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); }
+.conf-tag { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted2); }
+.conf-dot { width: 6px; height: 6px; border-radius: 50%; }
+.conf-dot.high { background: var(--green); } .conf-dot.med { background: var(--sun); } .conf-dot.low { background: var(--muted2); }
+.del-btn { background: none; border: none; font-size: 16px; color: var(--muted2); cursor: pointer; padding: 4px 6px; border-radius: 8px; transition: all 0.15s; touch-action: manipulation; line-height: 1; }
+.del-btn:hover { color: var(--red); background: var(--red-dim); }
+
+.loading-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 20px; padding: 22px 20px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow); }
+.spinner { width: 20px; height: 20px; border: 2.5px solid var(--border); border-top-color: var(--sun); border-radius: 50%; animation: spin 0.75s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 14px; color: var(--muted); font-weight: 500; }
+.loading-text strong { color: var(--text); }
+
+.empty-state { text-align: center; padding: 56px 20px; }
+.empty-icon { font-size: 48px; display: block; margin-bottom: 16px; opacity: 0.4; }
+.empty-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 8px; opacity: 0.45; }
+.empty-sub { font-size: 14px; color: var(--muted2); }
+
+.toast { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom,0px)); left: 16px; right: 16px; max-width: 560px; margin: 0 auto; background: var(--hero-bg); color: rgba(255,255,255,0.9); padding: 14px 18px; border-radius: 14px; font-size: 14px; font-weight: 500; z-index: 999; line-height: 1.4; box-shadow: var(--shadow-lg); animation: toastUp 0.25s cubic-bezier(0.16,1,0.3,1); }
+.toast.err { background: var(--red); color: #fff; }
+.toast.ok  { background: var(--green); color: #fff; }
+@keyframes toastUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.leaflet-control-attribution { font-size: 9px !important; }
+.leaflet-popup-content-wrapper { border-radius: 10px !important; font-family: 'Figtree', sans-serif !important; }
+
+/* ── SEO CONTENT ── */
+.seo-section { max-width: 560px; margin: 0 auto; padding: 0 20px 60px; }
+.seo-divider { border: none; border-top: 1px solid var(--border); margin-bottom: 40px; }
+.seo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 40px; }
+.seo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; }
+.seo-card-icon { font-size: 22px; margin-bottom: 10px; display: block; }
+.seo-card-title { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; line-height: 1.2; }
+.seo-card-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.seo-prose { margin-bottom: 36px; }
+.seo-prose h2 { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 12px; letter-spacing: -0.4px; }
+.seo-prose p { font-size: 14px; color: var(--muted); line-height: 1.75; margin-bottom: 12px; }
+.seo-prose p:last-child { margin-bottom: 0; }
+.faq-list { margin-bottom: 40px; display: flex; flex-direction: column; gap: 2px; }
+.faq-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.faq-question { width: 100%; text-align: left; padding: 16px 18px; font-family: 'Figtree', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); background: none; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; transition: background 0.15s; }
+.faq-question:hover { background: var(--bg); }
+.faq-chevron { font-size: 12px; color: var(--muted2); transition: transform 0.2s; flex-shrink: 0; }
+.faq-item.open .faq-chevron { transform: rotate(180deg); }
+.faq-answer { font-size: 13px; color: var(--muted); line-height: 1.7; padding: 0 18px 16px; display: none; }
+.faq-item.open .faq-answer { display: block; }
+.footer-links { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+.footer-btn { display: inline-flex; align-items: center; gap: 7px; font-family: "Figtree", sans-serif; font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 100px; text-decoration: none; transition: opacity 0.15s, transform 0.1s; touch-action: manipulation; border: none; cursor: pointer; }
+.footer-btn:active { transform: scale(0.97); }
+.footer-btn.coffee { background: var(--sun); color: #1A1714; }
+.footer-btn.contact { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.15); }
+.footer-btn:hover { opacity: 0.85; }
+footer { background: var(--hero-bg); padding: 28px 20px; text-align: center; }
+.footer-inner { max-width: 560px; margin: 0 auto; }
+.footer-wordmark { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 700; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+.footer-wordmark span { font-style: italic; font-weight: 300; color: var(--sun); }
+.footer-text { font-size: 12px; color: rgba(255,255,255,0.2); line-height: 1.6; }
+@media (max-width: 420px) { .seo-grid { grid-template-columns: 1fr; } }
+
+@media (min-width: 480px) {
+  .hero { padding: 56px 24px 60px; }
+  .content { padding: 32px 24px 60px; }
+  .map-section { padding: 32px 24px 0; }
+  #map { height: 340px; }
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-top">
+      <div class="wordmark">
+        <span class="wordmark-text">Is It South Facing</span>
+        <span class="wordmark-q">?</span>
+      </div>
+      <span class="hero-pill">UK Property Tool</span>
+    </div>
+    <h1 class="hero-title">Does the garden<br>face <em>south?</em></h1>
+    <p class="hero-sub">Enter any UK property address. We'll find the building, identify the rear wall, and calculate the garden's orientation.</p>
+    <div class="hero-search">
+      <input class="hero-input" type="text" id="addrInput"
+        placeholder="e.g. 14 Acacia Ave, London, E1 6RF"
+        autocomplete="street-address" enterkeyhint="search" />
+      <button class="hero-btn" id="goBtn" onclick="startGeocode()">
+        <span>🔍</span> Find
+      </button>
+    </div>
+    <p class="hero-hint">Include a postcode for best results — or drop a pin directly on the map</p>
+    <div class="debug-log" id="debugLog"></div>
+  </div>
+</div>
+
+<div class="map-section" id="mapSection">
+  <div class="map-card">
+    <div class="map-header">
+      <div class="map-header-left">
+        <div class="map-pin-icon">📍</div>
+        <div class="map-header-text">
+          <div class="map-header-title">Confirm location</div>
+          <div class="map-header-sub" id="mapSubtitle">Drag the pin if needed, then analyse</div>
+        </div>
+      </div>
+      <button class="map-confirm-btn" id="confirmBtn" onclick="runAnalysis()">
+        ☀️ Analyse
+      </button>
+    </div>
+    <div id="map"></div>
+    <div class="map-footer">
+      <div class="map-legend">
+        <div class="legend-item"><div class="legend-dot front"></div>Front (road side)</div>
+        <div class="legend-item"><div class="legend-dot back"></div>Back (garden)</div>
+      </div>
+      <span id="mapCoords"></span>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="stats-strip" id="statsStrip">
+    <div class="stat-box"><span class="stat-num" id="sTotal">0</span><span class="stat-label">Checked</span></div>
+    <div class="stat-box highlight"><span class="stat-num" id="sSouth">0</span><span class="stat-label">South Facing</span></div>
+    <div class="stat-box"><span class="stat-num" id="sPct">—</span><span class="stat-label">Hit Rate</span></div>
+  </div>
+  <div class="filter-bar" id="filterBar">
+    <button class="filter-pill active" onclick="setFilter('all',this)">All</button>
+    <button class="filter-pill" onclick="setFilter('south',this)">South Facing</button>
+    <button class="filter-pill" onclick="setFilter('not',this)">Not South</button>
+    <div class="filter-spacer"></div>
+    <button class="clear-btn" onclick="clearAll()">Clear all</button>
+  </div>
+  <div class="results" id="results"></div>
+</div>
+
+<script>
+let props = [];
+let activeFilter = 'all';
+let leafletMap = null;
+let pinMarker = null;
+let mapLayers = []; // all drawn layers to clear between runs
+let pendingAddress = '';
+let pendingLat = null;
+let pendingLng = null;
+
+try { props = JSON.parse(localStorage.getItem('iisf4_props') || '[]'); } catch {}
+
+// ── Logger ────────────────────────────────────────────────────
+const logEl = document.getElementById('debugLog');
+let logLines = [];
+function log(msg, type) {
+  const cls = type==='ok'?'lok':type==='warn'?'lwarn':type==='err'?'lerr':'';
+  logLines.push(cls ? `<span class="${cls}">${msg}</span>` : msg);
+  if (logLines.length > 40) logLines.shift();
+  logEl.innerHTML = logLines.join('<br>');
+  logEl.className = 'debug-log show';
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ── Overpass mirrors ──────────────────────────────────────────
+const MIRRORS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  'https://overpass.openstreetmap.ru/api/interpreter'
+];
+
+async function overpassFetch(query) {
+  for (let i = 0; i < MIRRORS.length; i++) {
+    log(`Trying server ${i+1}/${MIRRORS.length}…`);
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 12000);
+      const res = await fetch(MIRRORS[i], { method:'POST', body:'data='+encodeURIComponent(query), signal:ctrl.signal });
+      clearTimeout(t);
+      if ([429,503,504].includes(res.status)) { log(`Server ${i+1} busy (${res.status}), next…`,'warn'); continue; }
+      if (!res.ok) { log(`Server ${i+1} error (${res.status}), next…`,'warn'); continue; }
+      const data = await res.json();
+      log(`Server ${i+1} OK ✓`, 'ok');
+      return data;
+    } catch(e) {
+      log(`Server ${i+1} ${e.name==='AbortError'?'timed out':'failed'}, next…`,'warn');
+    }
+  }
+  throw new Error('All map servers are busy. Please try again in a minute.');
+}
+
+// ── Geocode — OpenStreetMap Nominatim ─────────────────────────
+async function geocode(address) {
+  const q = encodeURIComponent(address.toLowerCase().includes('uk') ? address : address+', UK');
+  log('Geocoding…');
+  let res, data;
+  try { res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=3&countrycodes=gb&addressdetails=1`); }
+  catch { throw new Error('Cannot reach geocoding service. Check your internet connection.'); }
+  if (!res.ok) throw new Error(`Geocoding failed — HTTP ${res.status}`);
+  try { data = await res.json(); } catch { throw new Error('Unexpected geocoding response.'); }
+  log(`${data.length} result(s)`, data.length?'ok':'warn');
+  if (!data.length) throw new Error('Address not found. Try adding a postcode, e.g. "24 High St, London, E1 6RF".');
+  const r = data[0];
+  log(`→ ${r.display_name.slice(0,60)}…`, 'ok');
+  return { lat: +r.lat, lng: +r.lon, display: r.display_name };
+}
+
+// ── Maths helpers ─────────────────────────────────────────────
+function haversine(lat1,lon1,lat2,lon2) {
+  const R=6371000, r=Math.PI/180;
+  const dLat=(lat2-lat1)*r, dLon=(lon2-lon1)*r;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*r)*Math.cos(lat2*r)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function bearingTo(lat1,lon1,lat2,lon2) {
+  const r=Math.PI/180, dLon=(lon2-lon1)*r;
+  const y=Math.sin(dLon)*Math.cos(lat2*r);
+  const x=Math.cos(lat1*r)*Math.sin(lat2*r)-Math.sin(lat1*r)*Math.cos(lat2*r)*Math.cos(dLon);
+  return ((Math.atan2(y,x)*180/Math.PI)+360)%360;
+}
+
+function closestPointOnSegment(pLat,pLon,aLat,aLon,bLat,bLon) {
+  const r=Math.PI/180, cosLat=Math.cos(pLat*r);
+  const ax=(aLon-pLon)*cosLat*111320, ay=(aLat-pLat)*110540;
+  const bx=(bLon-pLon)*cosLat*111320, by=(bLat-pLat)*110540;
+  const dx=bx-ax, dy=by-ay, lenSq=dx*dx+dy*dy;
+  const t=lenSq===0?0:Math.max(0,Math.min(1,((-ax)*dx+(-ay)*dy)/lenSq));
+  return { lat:aLat+t*(bLat-aLat), lon:aLon+t*(bLon-aLon) };
+}
+
+function centroidOfNodes(nodes) {
+  let la=0, lo=0;
+  nodes.forEach(n => { la+=n.lat; lo+=n.lon; });
+  return { lat:la/nodes.length, lon:lo/nodes.length };
+}
+
+function toDir(deg) {
+  return ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(deg/22.5)%16];
+}
+
+function isSouth(deg) { return deg===null?null:(deg>=135&&deg<=225); }
+
+// ── Road distance helper ──────────────────────────────────────
+function distToRoads(lat, lon, roads) {
+  let minDist = Infinity;
+  for (const road of roads) {
+    for (let j=0; j<road.geometry.length-1; j++) {
+      const cp = closestPointOnSegment(lat, lon,
+        road.geometry[j].lat, road.geometry[j].lon,
+        road.geometry[j+1].lat, road.geometry[j+1].lon);
+      const d = haversine(lat, lon, cp.lat, cp.lon);
+      if (d < minDist) minDist = d;
+    }
+  }
+  return minDist;
+}
+
+// ── CORE: Analyse building footprint ─────────────────────────
+// Strategy:
+// 1. Fetch building footprint + nearby roads in one query
+// 2. Find the building closest to the pin
+// 3. Score every edge by its distance to the nearest road
+// 4. Front wall = edge closest to road, Rear wall = edge furthest from road
+// 5. Garden bearing = outward normal from centroid through rear wall midpoint
+// 6. Fall back to road-only if no footprint found
+async function analyzeOrientation(lat, lng) {
+  log('Fetching building footprint and roads…');
+
+  const query = `[out:json][timeout:15];
+(
+  way["building"](around:60,${lat},${lng});
+  way["highway"~"^(residential|tertiary|secondary|primary|unclassified|living_street|service|road)$"](around:150,${lat},${lng});
+);
+out geom;`;
+
+  const data = await overpassFetch(query);
+  const els = data.elements || [];
+
+  const buildings = els.filter(e => e.tags?.building && e.geometry?.length >= 4);
+  const roads = els.filter(e => e.tags?.highway && e.geometry?.length >= 2);
+
+  log(`Found ${buildings.length} building(s), ${roads.length} road(s)`, 'ok');
+
+  if (buildings.length > 0 && roads.length > 0) {
+    return analyzeWithBuilding(lat, lng, buildings, roads);
+  } else if (roads.length > 0) {
+    log('No building footprint in OSM — using road fallback', 'warn');
+    return analyzeRoadOnly(lat, lng, roads);
+  } else {
+    log('No data found nearby', 'err');
+    return { bearing: null, confidence: 'low', method: 'none' };
+  }
+}
+
+function analyzeWithBuilding(lat, lng, buildings, roads) {
+  // Find the building whose polygon contains or is closest to the pin
+  let best = { dist: Infinity, building: null };
+  for (const b of buildings) {
+    const c = centroidOfNodes(b.geometry);
+    const d = haversine(lat, lng, c.lat, c.lon);
+    if (d < best.dist) { best = { dist: d, building: b }; }
+  }
+
+  const bldg = best.building;
+  const nodes = bldg.geometry;
+  const centroid = centroidOfNodes(nodes);
+  log(`Building centroid ${best.dist.toFixed(1)}m from pin`, 'ok');
+
+  // Score every edge of the building polygon by distance to nearest road
+  const edges = [];
+  for (let i=0; i<nodes.length-1; i++) {
+    const a=nodes[i], b=nodes[i+1];
+    const midLat=(a.lat+b.lat)/2, midLon=(a.lon+b.lon)/2;
+    const edgeLen = haversine(a.lat, a.lon, b.lat, b.lon);
+    if (edgeLen < 1.5) continue; // skip tiny polygon artefacts
+
+    const roadDist = distToRoads(midLat, midLon, roads);
+    edges.push({ a, b, midLat, midLon, roadDist, edgeLen });
+  }
+
+  if (edges.length < 2) {
+    log('Too few building edges — road fallback', 'warn');
+    return analyzeRoadOnly(lat, lng, roads);
+  }
+
+  // Sort: first = front (closest to road), last = rear (furthest = garden)
+  edges.sort((x,y) => x.roadDist - y.roadDist);
+
+  const frontEdge = edges[0];
+  const rearEdge  = edges[edges.length-1];
+
+  log(`Front wall → road: ${frontEdge.roadDist.toFixed(1)}m (${frontEdge.edgeLen.toFixed(1)}m long)`, 'ok');
+  log(`Rear wall → road: ${rearEdge.roadDist.toFixed(1)}m (${rearEdge.edgeLen.toFixed(1)}m long)`, 'ok');
+
+  // Garden bearing: centroid → rear wall midpoint (outward direction from house)
+  const gardenBearing = bearingTo(centroid.lat, centroid.lon, rearEdge.midLat, rearEdge.midLon);
+  log(`Garden bearing: ${gardenBearing.toFixed(1)}° (${toDir(gardenBearing)})`, 'ok');
+
+  const confidence = best.dist < 15 ? 'high' : best.dist < 35 ? 'med' : 'low';
+
+  return {
+    bearing: gardenBearing,
+    confidence,
+    method: 'building',
+    buildingNodes: nodes,
+    centroid,
+    frontEdge,
+    rearEdge
+  };
+}
+
+function analyzeRoadOnly(lat, lng, roads) {
+  let best = { dist: Infinity, lat: null, lon: null };
+  for (const road of roads) {
+    const g = road.geometry;
+    for (let i=0; i<g.length-1; i++) {
+      const cp = closestPointOnSegment(lat, lng, g[i].lat, g[i].lon, g[i+1].lat, g[i+1].lon);
+      const d = haversine(lat, lng, cp.lat, cp.lon);
+      if (d < best.dist) { best = { dist:d, lat:cp.lat, lon:cp.lon }; }
+    }
+  }
+  if (!best.lat) return { bearing:null, confidence:'low', method:'none' };
+
+  const front = bearingTo(lat, lng, best.lat, best.lon);
+  const garden = (front+180)%360;
+  log(`Road fallback: garden faces ${garden.toFixed(1)}° (${toDir(garden)})`, 'ok');
+  return { bearing: garden, confidence: 'low', method: 'road' };
+}
+
+// ── Map setup ─────────────────────────────────────────────────
+function initMap(lat, lng) {
+  if (!leafletMap) {
+    leafletMap = L.map('map', { zoomControl: true });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+      maxZoom: 19
+    }).addTo(leafletMap);
+    leafletMap.on('click', e => {
+      updatePin(e.latlng.lat, e.latlng.lng);
+      pendingAddress = `Pin (${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)})`;
+    });
+  }
+  leafletMap.setView([lat, lng], 18);
+
+  if (!pinMarker) {
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:26px;height:26px;background:#F59E0B;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>`,
+      iconSize: [26,26], iconAnchor: [13,13]
+    });
+    pinMarker = L.marker([lat,lng], { icon, draggable: true }).addTo(leafletMap);
+    pinMarker.on('dragend', e => {
+      const p = e.target.getLatLng();
+      pendingLat = p.lat; pendingLng = p.lng;
+      updateCoordsDisplay(p.lat, p.lng);
+      clearMapLayers();
+    });
+  } else {
+    pinMarker.setLatLng([lat,lng]);
+  }
+  updateCoordsDisplay(lat, lng);
+}
+
+function updatePin(lat, lng) {
+  pendingLat = lat; pendingLng = lng;
+  if (pinMarker) pinMarker.setLatLng([lat,lng]);
+  if (leafletMap) leafletMap.panTo([lat,lng]);
+  updateCoordsDisplay(lat, lng);
+  clearMapLayers();
+}
+
+function updateCoordsDisplay(lat, lng) {
+  document.getElementById('mapCoords').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+}
+
+function clearMapLayers() {
+  mapLayers.forEach(l => { try { leafletMap.removeLayer(l); } catch {} });
+  mapLayers = [];
+}
+
+function drawResultOnMap(result) {
+  clearMapLayers();
+  if (!result || result.bearing === null) return;
+
+  const originLat = result.centroid ? result.centroid.lat : pendingLat;
+  const originLon = result.centroid ? result.centroid.lon : pendingLng;
+
+  // Draw building footprint if we have it
+  if (result.buildingNodes) {
+    const coords = result.buildingNodes.map(n => [n.lat, n.lon]);
+    const poly = L.polygon(coords, {
+      color: '#6B7280', weight: 2,
+      fillColor: '#E5E7EB', fillOpacity: 0.5
+    }).addTo(leafletMap);
+    mapLayers.push(poly);
+
+    // Front edge — red
+    const fe = result.frontEdge;
+    const frontLine = L.polyline([[fe.a.lat,fe.a.lon],[fe.b.lat,fe.b.lon]], {
+      color: '#EF4444', weight: 4, opacity: 0.9
+    }).addTo(leafletMap);
+    mapLayers.push(frontLine);
+
+    // Rear edge — green (garden side)
+    const re = result.rearEdge;
+    const rearLine = L.polyline([[re.a.lat,re.a.lon],[re.b.lat,re.b.lon]], {
+      color: '#15803D', weight: 4, opacity: 0.9
+    }).addTo(leafletMap);
+    mapLayers.push(rearLine);
+
+    // Small dot at rear wall midpoint
+    const rearDot = L.circleMarker([re.midLat, re.midLon], {
+      radius: 5, color: '#15803D', fillColor: '#4ADE80', fillOpacity: 1, weight: 2
+    }).addTo(leafletMap);
+    mapLayers.push(rearDot);
+  }
+
+  // Garden direction arrow — from rear wall midpoint or property centroid
+  const arrowOriginLat = result.rearEdge ? result.rearEdge.midLat : originLat;
+  const arrowOriginLon = result.rearEdge ? result.rearEdge.midLon : originLon;
+
+  // Arrow length: ~20m behind the property
+  const arrowLen = 0.00018;
+  const rad = result.bearing * Math.PI / 180;
+  const endLat = arrowOriginLat + arrowLen * Math.cos(rad);
+  const endLon = arrowOriginLon + arrowLen * Math.sin(rad) / Math.cos(arrowOriginLat * Math.PI / 180);
+
+  const arrowLine = L.polyline([[arrowOriginLat,arrowOriginLon],[endLat,endLon]], {
+    color: '#15803D', weight: 3, opacity: 0.8,
+    dashArray: '6 4'
+  }).addTo(leafletMap);
+  mapLayers.push(arrowLine);
+
+  // Direction label at arrow tip
+  const isSouthFacing = isSouth(result.bearing);
+  const labelHtml = `<div style="background:${isSouthFacing?'#15803D':'#374151'};color:#fff;font-family:'Figtree',sans-serif;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.2);">${toDir(result.bearing)} ${Math.round(result.bearing)}°</div>`;
+  const labelMarker = L.marker([endLat, endLon], {
+    icon: L.divIcon({ className:'', html:labelHtml, iconSize:null, iconAnchor:[30,10] })
+  }).addTo(leafletMap);
+  mapLayers.push(labelMarker);
+
+  // Fit map to show building + arrow
+  if (result.buildingNodes) {
+    const allCoords = [...result.buildingNodes.map(n=>[n.lat,n.lon]), [endLat,endLon]];
+    leafletMap.fitBounds(L.latLngBounds(allCoords).pad(0.3));
+  }
+}
+
+// ── Step 1: Find address → show map ──────────────────────────
+async function startGeocode() {
+  const inp = document.getElementById('addrInput');
+  const btn = document.getElementById('goBtn');
+  const address = inp.value.trim();
+  if (!address) { toast('Please enter an address.','err'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+  logLines = []; logEl.innerHTML = ''; logEl.className = 'debug-log show';
+
+  try {
+    const geo = await geocode(address);
+    pendingAddress = address;
+    pendingLat = geo.lat;
+    pendingLng = geo.lng;
+
+    document.getElementById('mapSection').className = 'map-section show';
+    initMap(geo.lat, geo.lng);
+
+    setTimeout(() => {
+      leafletMap.invalidateSize();
+      document.getElementById('mapSection').scrollIntoView({ behavior:'smooth', block:'start' });
+    }, 120);
+
+    log('📍 Pin placed — confirm or drag to adjust, then tap Analyse', 'ok');
+    document.getElementById('mapSubtitle').textContent = 'Drag the pin if needed, then analyse';
+
+  } catch(err) {
+    log('❌ ' + err.message, 'err');
+    toast(err.message, 'err');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>🔍</span> Find';
+}
+
+// ── Step 2: Analyse from pin ──────────────────────────────────
+async function runAnalysis() {
+  if (!pendingLat) { toast('Find an address first.','err'); return; }
+
+  const confirmBtn = document.getElementById('confirmBtn');
+  confirmBtn.disabled = true;
+  confirmBtn.innerHTML = '<span class="spinner"></span>';
+
+  const lid = 'l'+Date.now();
+  addLoader(lid, pendingAddress);
+  setTimeout(() => document.getElementById('results').scrollIntoView({ behavior:'smooth' }), 200);
+
+  try {
+    const result = await analyzeOrientation(pendingLat, pendingLng);
+    const south = isSouth(result.bearing);
+
+    log(south===true?'✅ SOUTH FACING':south===false?'❌ Not south facing':'⚠️ Could not determine',
+        south===true?'ok':south===null?'warn':'');
+
+    drawResultOnMap(result);
+
+    props.unshift({
+      id: Date.now(),
+      address: pendingAddress,
+      bearing: result.bearing,
+      dir: result.bearing!==null ? toDir(result.bearing) : null,
+      south,
+      confidence: result.confidence,
+      method: result.method
+    });
+
+    saveProps(); rmLoader(lid); render();
+
+  } catch(err) {
+    log('❌ '+err.message,'err');
+    rmLoader(lid);
+    toast(err.message,'err');
+  }
+
+  confirmBtn.disabled = false;
+  confirmBtn.innerHTML = '☀️ Analyse';
+}
+
+function saveProps() { localStorage.setItem('iisf4_props', JSON.stringify(props)); }
+
+function addLoader(id, addr) {
+  const d=document.createElement('div');
+  d.id=id; d.className='loading-card';
+  d.innerHTML=`<div class="spinner"></div><div class="loading-text">Analysing <strong>${addr}</strong>…</div>`;
+  document.getElementById('results').prepend(d);
+}
+function rmLoader(id) { document.getElementById(id)?.remove(); }
+
+function setFilter(f,btn) {
+  activeFilter=f;
+  document.querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); render();
+}
+function clearAll() { if(!confirm('Remove all saved properties?')) return; props=[]; saveProps(); render(); }
+function delProp(id) { props=props.filter(p=>p.id!==id); saveProps(); render(); }
+
+function render() {
+  const results=document.getElementById('results');
+  const n=props.length, sc=props.filter(p=>p.south===true).length;
+  document.getElementById('statsStrip').className='stats-strip'+(n?' show':'');
+  document.getElementById('filterBar').className='filter-bar'+(n?' show':'');
+  document.getElementById('sTotal').textContent=n;
+  document.getElementById('sSouth').textContent=sc;
+  document.getElementById('sPct').textContent=n?Math.round(sc/n*100)+'%':'—';
+
+  let list=props;
+  if (activeFilter==='south') list=props.filter(p=>p.south===true);
+  if (activeFilter==='not')   list=props.filter(p=>p.south!==true);
+
+  results.querySelectorAll('.result-card,.empty-state').forEach(e=>e.remove());
+
+  if (!list.length) {
+    const d=document.createElement('div'); d.className='empty-state';
+    d.innerHTML=`<span class="empty-icon">${n===0?'🏡':'🔍'}</span><div class="empty-title">${n===0?'No properties yet':'Nothing here'}</div><div class="empty-sub">${n===0?'Find an address above to get started':'Try a different filter'}</div>`;
+    results.appendChild(d); return;
+  }
+
+  list.forEach(p => {
+    const sf=p.south===true, unk=p.south===null;
+    let icon,answer,cls,label;
+    if (sf)       { icon='☀️'; answer='Yes, south facing'; cls='verdict-yes'; label='Great news for your garden'; }
+    else if (unk) { icon='❓'; answer='Undetermined'; cls='verdict-unk'; label='Could not calculate orientation'; }
+    else          { icon='🌥'; answer='Not south facing'; cls='verdict-no'; label=`Garden faces ${p.dir||'unknown'}`; }
+
+    const note = sf
+      ? 'This garden faces south and should receive direct sunlight for most of the day.'
+      : unk ? "We couldn't determine orientation. Try dragging the pin directly onto the property."
+            : `This garden faces ${p.dir} — it will receive less direct sunlight than a south-facing garden.`;
+
+    const methodLabel = p.method==='building' ? '🏠 Building footprint used'
+                      : p.method==='road'     ? '🛣️ Road estimate (no footprint found)'
+                      : '';
+
+    const parts=p.address.split(',');
+    const card=document.createElement('div');
+    card.className='result-card'+(sf?' south':'');
+    card.innerHTML=`
+      <div class="verdict-bar">
+        <div class="verdict-left">
+          <div class="verdict-icon ${sf?'yes':unk?'unk':'no'}">${icon}</div>
+          <div class="verdict-text">
+            <div class="verdict-answer ${cls}">${answer}</div>
+            <div class="verdict-label">${label}</div>
+          </div>
+        </div>
+        ${p.bearing!==null?`<div class="dir-chip"><span class="dir-main">${p.dir}</span><span class="dir-deg">${Math.round(p.bearing)}°</span></div>`:''}
+      </div>
+      <div class="card-body">
+        <div class="card-address">${parts[0]}</div>
+        <div class="card-sub">${parts.slice(1).join(',').trim()}</div>
+        <div class="card-note">${note}</div>
+        ${methodLabel?`<div class="method-tag">${methodLabel}</div>`:''}
+      </div>
+      <div class="card-footer">
+        <div class="conf-tag"><div class="conf-dot ${p.confidence}"></div>${p.confidence} accuracy</div>
+        <button class="del-btn" onclick="delProp(${p.id})" title="Remove">✕</button>
+      </div>`;
+    results.appendChild(card);
+  });
+}
+
+function toast(msg,type='') {
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  const t=document.createElement('div');
+  t.className='toast'+(type?' '+type:'');
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),6000);
+}
+
+document.getElementById('addrInput').addEventListener('keydown',e=>{ if(e.key==='Enter') startGeocode(); });
+render();
+
+</script>
+
+<!-- SEO content section -->
+<div class="seo-section">
+  <hr class="seo-divider">
+  <div class="seo-grid">
+    <div class="seo-card">
+      <span class="seo-card-icon">☀️</span>
+      <div class="seo-card-title">More sunshine, all day</div>
+      <div class="seo-card-body">South-facing gardens get direct sun from morning to evening — ideal for outdoor living and growing.</div>
+    </div>
+    <div class="seo-card">
+      <span class="seo-card-icon">💷</span>
+      <div class="seo-card-title">Adds property value</div>
+      <div class="seo-card-body">Estate agents report south-facing gardens can add 5–10% to a UK property asking price.</div>
+    </div>
+    <div class="seo-card">
+      <span class="seo-card-icon">🌱</span>
+      <div class="seo-card-title">Better for growing</div>
+      <div class="seo-card-body">Vegetables, fruit and most plants thrive with full southern exposure and consistent warmth.</div>
+    </div>
+    <div class="seo-card">
+      <span class="seo-card-icon">🗺️</span>
+      <div class="seo-card-title">Uses real map data</div>
+      <div class="seo-card-body">We use the actual building footprint from OpenStreetMap to identify the rear wall — not just an estimate.</div>
+    </div>
+  </div>
+
+  <div class="seo-prose">
+    <h2>What is a south-facing garden?</h2>
+    <p>A south-facing garden is one where the back of the property faces south, meaning the garden is oriented towards the sun's path across the sky. In the UK, the sun travels from east to west along a southerly arc, so a south-facing garden receives the most direct sunlight throughout the day — particularly valuable during spring and summer.</p>
+    <p>When buying or renting a UK property, garden orientation is one of the most asked-about features. A south-facing garden means more usable outdoor space, better conditions for plants and vegetables, and a warmer, more enjoyable space to spend time in.</p>
+  </div>
+
+  <div class="seo-prose">
+    <h2>How we calculate garden orientation</h2>
+    <p>Most tools simply point a compass at your address and guess. We go further. After geocoding your address, we fetch the actual building footprint from OpenStreetMap — the real polygon outline of your house. We then measure each wall's distance to the nearest road: the wall closest to the road is the front of the house, and the wall furthest from the road is the rear — where the garden is.</p>
+    <p>The garden's compass bearing is calculated from the building's centroid through the rear wall's midpoint, giving you an accurate orientation rather than a rough estimate. You can also drag the map pin to fine-tune the location before running the analysis.</p>
+  </div>
+
+  <div class="seo-prose"><h2>Frequently asked questions</h2></div>
+  <div class="faq-list">
+    <div class="faq-item">
+      <button class="faq-question">How do I check if my garden is south facing?<span class="faq-chevron">▼</span></button>
+      <div class="faq-answer">Enter your full UK address above — including postcode — and tap Find. We geocode the address, show it on a map so you can confirm the pin, then calculate the garden orientation using building footprint data. The result shows the compass direction the garden faces and whether it qualifies as south-facing.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question">What counts as south facing?<span class="faq-chevron">▼</span></button>
+      <div class="faq-answer">We classify a garden as south-facing if its orientation falls between 135° (south-east) and 225° (south-west) on the compass. True south is 180°. Gardens in this range receive meaningful direct sunlight for the majority of the day in the UK.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question">Does a south facing garden add value?<span class="faq-chevron">▼</span></button>
+      <div class="faq-answer">Yes. South-facing gardens are consistently cited by UK estate agents as one of the most desirable property features. Research suggests they can add between 5% and 10% to a property's value, as buyers place a significant premium on all-day sunshine and usable outdoor space.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question">What if my building footprint is not in OpenStreetMap?<span class="faq-chevron">▼</span></button>
+      <div class="faq-answer">If we cannot find your building's footprint, we fall back to using the nearest road to estimate the front of the property and calculate the garden as the opposite direction. This is less precise, so we flag it on the result card as a road estimate with low confidence. Try dragging the pin directly onto the centre of your property for better accuracy.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question">Is this tool free?<span class="faq-chevron">▼</span></button>
+      <div class="faq-answer">Yes, completely free with no signup required. We use OpenStreetMap data which is openly licensed, and all analysis runs in your browser. We do not store your searches or any personal data.</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-wordmark">Is It South Facing<span>?</span></div>
+    <div class="footer-links">
+      <a class="footer-btn coffee" href="https://buymeacoffee.com/itslanre" target="_blank" rel="noopener">
+        ☕ Buy me a coffee
+      </a>
+      <a class="footer-btn contact" href="/cdn-cgi/l/email-protection#412c252033202c2e2d20787301262c20282d6f222e2c7e3234232b2422357c083261083561122e34352961072022282f2661a3c1d56112342626243235282e2f67232e25387c09286d6108612920372461206132342626243235282e2f61272e3361083261083561122e34352961072022282f267b">
+        ✉️ Send a suggestion
+      </a>
+    </div>
+    <div class="footer-text">Free UK garden orientation checker · Powered by OpenStreetMap · No signup needed<br>Built for UK property hunters who care about sunshine ☀️</div>
+  </div>
+</footer>
+
+<!-- FAQ accordion — must be after FAQ HTML -->
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"><
