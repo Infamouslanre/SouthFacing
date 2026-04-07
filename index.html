@@ -3,26 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Is It South Facing? — Free UK Garden Orientation Checker</title>
-<meta name="google-adsense-account" content="ca-pub-7131419666924013">
+<title>Is It South Facing? — Check If Your Garden Is South Facing by Postcode</title>
+
 <!-- SEO -->
-<meta name="description" content="Find out if a UK property has a south-facing garden in seconds. Enter any address and we'll use live map data to calculate the garden's compass orientation — free, no signup needed.">
-<meta name="keywords" content="south facing garden, UK property, garden orientation checker, does my garden face south, house garden direction, property search UK">
+<meta name="description" content="Check if your garden is south facing by postcode or address. Free UK tool to find out instantly which direction your garden faces, how many sun hours it gets, and whether it qualifies as south facing. No signup needed.">
+<meta name="keywords" content="south facing garden, is my garden south facing, south facing garden checker, how to tell if my garden is south facing, how to check if a garden is south facing, is my garden south facing by postcode, how to know if my garden is south facing, how do you know if your garden is south facing, how to find out if your garden is south facing, UK property, garden orientation checker, house garden direction">
 <meta name="author" content="Is It South Facing">
 <meta name="robots" content="index, follow">
+<meta name="google-adsense-account" content="ca-pub-7131419666924013">
 <link rel="canonical" href="https://isitsouthfacing.co.uk/">
 
 <!-- Open Graph (WhatsApp, Facebook, LinkedIn previews) -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://isitsouthfacing.co.uk/">
-<meta property="og:title" content="Is It South Facing? — Free UK Garden Orientation Checker">
-<meta property="og:description" content="Find out instantly if a UK property has a south-facing garden. Enter any address — we use live map data and building footprints to calculate the exact orientation.">
+<meta property="og:title" content="Is It South Facing? — Check If Your Garden Is South Facing by Postcode">
+<meta property="og:description" content="Check if your garden is south facing by postcode or full address. We use real building footprint data to calculate the exact garden orientation — free, no signup, works on mobile.">
 <meta property="og:image" content="https://isitsouthfacing.co.uk/og-image.png">
 
 <!-- Twitter card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Is It South Facing? — Free UK Garden Orientation Checker">
-<meta name="twitter:description" content="Find out instantly if a UK property has a south-facing garden. Free, no signup needed.">
+<meta name="twitter:title" content="Is It South Facing? — Check If Your Garden Is South Facing by Postcode">
+<meta name="twitter:description" content="Check if your garden is south facing by postcode or address. Free UK tool, no signup needed.">
 
 <!-- Structured data — WebApplication schema -->
 <script type="application/ld+json">
@@ -254,6 +255,8 @@ input[type=range].sun-slider::-webkit-slider-thumb { -webkit-appearance: none; w
 .sun-arc-legend { display: flex; gap: 12px; margin-top: 6px; flex-wrap: wrap; }
 .sun-arc-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
 
+
+
 /* ── SEO CONTENT ── */
 .seo-section { max-width: 560px; margin: 0 auto; padding: 0 20px 60px; }
 .seo-divider { border: none; border-top: 1px solid var(--border); margin-bottom: 40px; }
@@ -342,6 +345,14 @@ footer { background: var(--hero-bg); padding: 28px 20px; text-align: center; }
         <div class="legend-item"><div class="legend-dot back"></div>Back (garden)</div>
       </div>
       <span id="mapCoords"></span>
+    </div>
+      <div class="shade-row">
+        <span class="shade-time-display" id="shadeTime">12:00</span>
+        <input type="range" class="shade-slider" id="shadeSlider" min="0" max="1439" value="720"
+          style="--shade-pct:50%" oninput="onShadeSlider(this)">
+        <span class="shade-status-pill sun-out" id="shadeStatus">—</span>
+      </div>
+      <div class="shade-hint">Shadow shown assumes no neighbouring buildings or trees</div>
     </div>
   </div>
 </div>
@@ -951,6 +962,8 @@ function updateSunSlider(input, propId, lat, lng, gardenBearing) {
   el.textContent = status==='in' ? '☀️ Sun in garden' : status==='out' ? '🌤 Not in garden' : '🌙 Sun has set';
 }
 
+
+
 function saveProps() { localStorage.setItem('iisf4_props', JSON.stringify(props)); }
 
 function addLoader(id, addr) {
@@ -1108,6 +1121,22 @@ render();
       <button class="faq-question">Is this tool free?<span class="faq-chevron">▼</span></button>
       <div class="faq-answer">Yes, completely free with no signup required. We use OpenStreetMap data which is openly licensed, and all analysis runs in your browser. We do not store your searches or any personal data.</div>
     </div>
+    <div class="faq-item">
+      <button class="faq-question">Can I check if my garden is south facing by postcode?<span class="faq-chevron">▼</span></button>
+      <div class="faq-answer">Yes — just type your postcode into the search box, with or without a street address. Including a full address gives the most accurate result, but a postcode alone will place the pin in the right area and you can drag it onto your specific property.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question">How do I know if my house is south facing?<span class="faq-chevron">▼</span></button>
+      <div class="faq-answer">Enter your address above and we'll calculate it automatically using your building's footprint. Alternatively, stand in your garden facing the house — if you are facing north, your garden faces south. You can check which way is north using the compass on your phone.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question">How to tell if a garden is south facing without a compass?<span class="faq-chevron">▼</span></button>
+      <div class="faq-answer">The easiest way is to use this tool — enter the address and we calculate the orientation from map data automatically, no compass needed. If you're at the property, you can also check where the sun is during the middle of the day. In the UK the sun is always in the southern part of the sky, so if it shines directly into your garden around midday, you're south facing.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question">Is my house south facing on Google Maps?<span class="faq-chevron">▼</span></button>
+      <div class="faq-answer">You can use Google Maps satellite view to estimate orientation by rotating the map and checking which way the garden faces relative to north — but it's slow and easy to get wrong. This tool does the calculation automatically and shows you the exact compass bearing, so it's faster and more reliable than trying to work it out on Google Maps.</div>
+    </div>
   </div>
 </div>
 
@@ -1118,7 +1147,7 @@ render();
       <a class="footer-btn coffee" href="https://buymeacoffee.com/itslanre" target="_blank" rel="noopener">
         ☕ Buy me a coffee
       </a>
-      <a class="footer-btn contact" href="/cdn-cgi/l/email-protection#412c252033202c2e2d20787301262c20282d6f222e2c7e3234232b2422357c083261083561122e34352961072022282f2661a3c1d56112342626243235282e2f67232e25387c09286d6108612920372461206132342626243235282e2f61272e3361083261083561122e34352961072022282f267b">
+      <a class="footer-btn contact" href="mailto:mdaramola92@gmail.com?subject=Is It South Facing — Suggestion&body=Hi, I have a suggestion for Is It South Facing:">
         ✉️ Send a suggestion
       </a>
     </div>
@@ -1126,5 +1155,17 @@ render();
   </div>
 </footer>
 
-<!-- FAQ accordion — must be after FAQ HTML -->
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"><
+<!-- FAQ accordion -->
+<script>
+document.querySelectorAll('.faq-question').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var item = btn.closest('.faq-item');
+    var isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(function(i) { i.classList.remove('open'); });
+    if (!isOpen) item.classList.add('open');
+  });
+});
+</script>
+
+</body>
+</html>
