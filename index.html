@@ -39,8 +39,7 @@
   "keywords": "south facing garden, UK property, garden orientation, compass direction"
 }
 </script>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7131419666924013"
-     crossorigin="anonymous"></script>
+
 <!-- FAQ structured data — helps Google show rich results -->
 <script type="application/ld+json">
 {
@@ -85,6 +84,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300;1,9..144,700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
 <style>
 :root {
   --bg:        #F4F1EC;
@@ -224,6 +224,35 @@ body { background: var(--bg); color: var(--text); font-family: 'Figtree', sans-s
 
 .leaflet-control-attribution { font-size: 9px !important; }
 .leaflet-popup-content-wrapper { border-radius: 10px !important; font-family: 'Figtree', sans-serif !important; }
+
+
+/* ── SUN PANEL ── */
+.sun-panel { border-top: 1px solid var(--border); padding: 16px 20px; background: #FFFBF5; }
+.sun-panel-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted2); margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+.sun-hours-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.sun-hours-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px; text-align: center; }
+.sun-hours-box.today { border-color: var(--sun); background: var(--sun-dim); }
+.sun-hours-val { font-family: "Fraunces", serif; font-size: 22px; font-weight: 700; color: var(--text); line-height: 1; display: block; margin-bottom: 3px; }
+.sun-hours-box.today .sun-hours-val { color: #92400E; }
+.sun-hours-lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted2); }
+.sun-times-row { display: flex; gap: 10px; margin-bottom: 16px; }
+.sun-time-box { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; }
+.sun-time-icon { font-size: 14px; flex-shrink: 0; }
+.sun-time-val { font-size: 14px; font-weight: 700; color: var(--text); font-family: "Fraunces", serif; }
+.sun-time-lbl { font-size: 10px; color: var(--muted2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.sun-slider-wrap { margin-bottom: 4px; }
+.sun-slider-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.sun-slider-time { font-weight: 700; color: var(--text); font-family: "Fraunces", serif; font-size: 14px; }
+.sun-status { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+.sun-status.in { background: var(--sun-dim); color: #92400E; }
+.sun-status.out { background: #F5F5F4; color: var(--muted); }
+.sun-status.set { background: #F5F5F4; color: var(--muted2); }
+input[type=range].sun-slider { width: 100%; height: 4px; border-radius: 2px; outline: none; border: none; -webkit-appearance: none; background: linear-gradient(to right, var(--sun) var(--pct,50%), var(--border) var(--pct,50%)); cursor: pointer; }
+input[type=range].sun-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--sun); border: 3px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+.sun-caveat { font-size: 11px; color: var(--muted2); margin-top: 10px; line-height: 1.5; }
+/* Sun path arc on map */
+.sun-arc-legend { display: flex; gap: 12px; margin-top: 6px; flex-wrap: wrap; }
+.sun-arc-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
 
 /* ── SEO CONTENT ── */
 .seo-section { max-width: 560px; margin: 0 auto; padding: 0 20px 60px; }
@@ -676,10 +705,42 @@ function drawResultOnMap(result) {
   }).addTo(leafletMap);
   mapLayers.push(labelMarker);
 
+  // Draw sun path arc for today
+  drawSunPath(originLat, originLon, result.bearing);
+
   // Fit map to show building + arrow
   if (result.buildingNodes) {
     const allCoords = [...result.buildingNodes.map(n=>[n.lat,n.lon]), [endLat,endLon]];
     leafletMap.fitBounds(L.latLngBounds(allCoords).pad(0.3));
+  }
+}
+
+function drawSunPath(lat, lng, gardenBearing) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const radius = 0.00030; // ~30m arc radius on map
+  const cosLat = Math.cos(lat * Math.PI / 180);
+  const times = SunCalc.getTimes(new Date(), lat, lng);
+  const sunriseMin = times.sunrise.getHours()*60 + times.sunrise.getMinutes();
+  const sunsetMin  = times.sunset.getHours()*60  + times.sunset.getMinutes();
+
+  for (let m = sunriseMin; m <= sunsetMin; m += 15) {
+    const t = new Date(today.getTime() + m * 60000);
+    const pos = SunCalc.getPosition(t, lat, lng);
+    if (pos.altitude <= 0.01) continue;
+    const sb = sunBearingFromPos(pos);
+    const rad = sb * Math.PI / 180;
+    const pLat = lat + radius * Math.cos(rad);
+    const pLon = lng + radius * Math.sin(rad) / cosLat;
+    const inGarden = angleDiff(gardenBearing, sb) < 90;
+    const dot = L.circleMarker([pLat, pLon], {
+      radius: 4,
+      color: inGarden ? '#F59E0B' : '#D1D5DB',
+      fillColor: inGarden ? '#F59E0B' : '#E5E7EB',
+      fillOpacity: 1,
+      weight: 1,
+      opacity: inGarden ? 0.9 : 0.5
+    }).addTo(leafletMap);
+    mapLayers.push(dot);
   }
 }
 
@@ -741,6 +802,10 @@ async function runAnalysis() {
 
     drawResultOnMap(result);
 
+    const sunData = (result.bearing !== null)
+      ? calcAllSunData(pendingLat, pendingLng, result.bearing)
+      : null;
+
     props.unshift({
       id: Date.now(),
       address: pendingAddress,
@@ -748,7 +813,10 @@ async function runAnalysis() {
       dir: result.bearing!==null ? toDir(result.bearing) : null,
       south,
       confidence: result.confidence,
-      method: result.method
+      method: result.method,
+      lat: pendingLat,
+      lng: pendingLng,
+      sunData
     });
 
     saveProps(); rmLoader(lid); render();
@@ -761,6 +829,126 @@ async function runAnalysis() {
 
   confirmBtn.disabled = false;
   confirmBtn.innerHTML = '☀️ Analyse';
+}
+
+
+// ── Sun calculations (SunCalc) ────────────────────────────────
+function angleDiff(a, b) {
+  let d = ((b - a) + 360) % 360;
+  if (d > 180) d -= 360;
+  return Math.abs(d);
+}
+
+function sunBearingFromPos(pos) {
+  return (pos.azimuth * 180 / Math.PI + 180) % 360;
+}
+
+function calcSunHoursForDate(lat, lng, gardenBearing, date) {
+  let minutes = 0;
+  const d = new Date(date); d.setHours(0,0,0,0);
+  for (let m = 0; m < 1440; m += 2) {
+    const t = new Date(d.getTime() + m * 60000);
+    const pos = SunCalc.getPosition(t, lat, lng);
+    if (pos.altitude <= 0.01) continue;
+    const sb = sunBearingFromPos(pos);
+    if (angleDiff(gardenBearing, sb) < 90) minutes += 2;
+  }
+  return Math.round(minutes / 60 * 10) / 10;
+}
+
+function calcAllSunData(lat, lng, gardenBearing) {
+  const today = new Date();
+  const summer = new Date(today.getFullYear(), 5, 21); // Jun 21
+  const winter = new Date(today.getFullYear(), 11, 21); // Dec 21
+
+  const todayHrs   = calcSunHoursForDate(lat, lng, gardenBearing, today);
+  const summerHrs  = calcSunHoursForDate(lat, lng, gardenBearing, summer);
+  const winterHrs  = calcSunHoursForDate(lat, lng, gardenBearing, winter);
+
+  const times = SunCalc.getTimes(today, lat, lng);
+  const fmt = t => {
+    if (!t || isNaN(t.getTime())) return '--:--';
+    return t.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  return {
+    todayHrs, summerHrs, winterHrs,
+    sunrise: fmt(times.sunrise),
+    sunset:  fmt(times.sunset),
+    lat, lng, gardenBearing
+  };
+}
+
+function getSunStatusAtMinute(lat, lng, gardenBearing, minuteOfDay) {
+  const d = new Date(); d.setHours(0,0,0,0);
+  const t = new Date(d.getTime() + minuteOfDay * 60000);
+  const pos = SunCalc.getPosition(t, lat, lng);
+  if (pos.altitude <= 0.01) return 'set';
+  const sb = sunBearingFromPos(pos);
+  return angleDiff(gardenBearing, sb) < 90 ? 'in' : 'out';
+}
+
+function buildSunPanelHTML(sunData, propId) {
+  const { todayHrs, summerHrs, winterHrs, sunrise, sunset } = sunData;
+  const nowMin = new Date().getHours()*60 + new Date().getMinutes();
+  const status = getSunStatusAtMinute(sunData.lat, sunData.lng, sunData.gardenBearing, nowMin);
+  const statusLabel = status==='in' ? '☀️ Sun in garden now' : status==='out' ? '🌤 Sun not in garden now' : '🌙 Sun has set';
+  const statusCls = status==='in' ? 'in' : status==='out' ? 'out' : 'set';
+  const pct = Math.round(nowMin / 1440 * 100);
+
+  return `<div class="sun-panel">
+    <div class="sun-panel-title">☀️ Sunlight analysis</div>
+    <div class="sun-hours-grid">
+      <div class="sun-hours-box today">
+        <span class="sun-hours-val">${todayHrs}h</span>
+        <span class="sun-hours-lbl">Today</span>
+      </div>
+      <div class="sun-hours-box">
+        <span class="sun-hours-val">${summerHrs}h</span>
+        <span class="sun-hours-lbl">Summer</span>
+      </div>
+      <div class="sun-hours-box">
+        <span class="sun-hours-val">${winterHrs}h</span>
+        <span class="sun-hours-lbl">Winter</span>
+      </div>
+    </div>
+    <div class="sun-times-row">
+      <div class="sun-time-box">
+        <span class="sun-time-icon">🌅</span>
+        <div><div class="sun-time-val">${sunrise}</div><div class="sun-time-lbl">Sunrise</div></div>
+      </div>
+      <div class="sun-time-box">
+        <span class="sun-time-icon">🌇</span>
+        <div><div class="sun-time-val">${sunset}</div><div class="sun-time-lbl">Sunset</div></div>
+      </div>
+    </div>
+    <div class="sun-slider-wrap">
+      <div class="sun-slider-label">
+        <span>Time of day</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="sun-slider-time" id="stime-${propId}">${String(Math.floor(nowMin/60)).padStart(2,'0')}:${String(nowMin%60).padStart(2,'0')}</span>
+          <span class="sun-status ${statusCls}" id="sstatus-${propId}">${statusLabel}</span>
+        </div>
+      </div>
+      <input type="range" class="sun-slider" min="0" max="1439" value="${nowMin}"
+        style="--pct:${pct}%"
+        oninput="updateSunSlider(this, ${propId}, ${sunData.lat}, ${sunData.lng}, ${sunData.gardenBearing})">
+    </div>
+    <div class="sun-caveat">⚠️ Hours shown assume no obstructions from neighbouring buildings or trees.</div>
+  </div>`;
+}
+
+function updateSunSlider(input, propId, lat, lng, gardenBearing) {
+  const min = parseInt(input.value);
+  const pct = Math.round(min / 1440 * 100);
+  input.style.setProperty('--pct', pct + '%');
+  const hh = String(Math.floor(min/60)).padStart(2,'0');
+  const mm = String(min%60).padStart(2,'0');
+  document.getElementById('stime-'+propId).textContent = hh+':'+mm;
+  const status = getSunStatusAtMinute(lat, lng, gardenBearing, min);
+  const el = document.getElementById('sstatus-'+propId);
+  el.className = 'sun-status '+status;
+  el.textContent = status==='in' ? '☀️ Sun in garden' : status==='out' ? '🌤 Not in garden' : '🌙 Sun has set';
 }
 
 function saveProps() { localStorage.setItem('iisf4_props', JSON.stringify(props)); }
