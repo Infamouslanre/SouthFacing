@@ -82,6 +82,9 @@
   ]
 }
 </script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300;1,9..144,700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -415,11 +418,22 @@ async function overpassFetch(query) {
 // ── Geocode — OpenStreetMap Nominatim ─────────────────────────
 async function geocode(address) {
   const q = encodeURIComponent(address.toLowerCase().includes('uk') ? address : address+', UK');
+  const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=3&countrycodes=gb&addressdetails=1`;
   log('Geocoding…');
-  let res, data;
-  try { res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=3&countrycodes=gb&addressdetails=1`); }
-  catch { throw new Error('Cannot reach geocoding service. Check your internet connection.'); }
-  if (!res.ok) throw new Error(`Geocoding failed — HTTP ${res.status}`);
+  let res;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      res = await fetch(url);
+      if (res.ok) break;
+      log(`Geocoder HTTP ${res.status}${attempt < 2 ? ', retrying…' : ''}`, 'warn');
+    } catch {
+      if (attempt === 2) throw new Error('Cannot reach geocoding service. Check your internet connection.');
+      log('Geocoder unreachable, retrying…', 'warn');
+      await new Promise(r => setTimeout(r, 1500));
+    }
+  }
+  if (!res?.ok) throw new Error(`Geocoding failed — HTTP ${res?.status}`);
+  let data;
   try { data = await res.json(); } catch { throw new Error('Unexpected geocoding response.'); }
   log(`${data.length} result(s)`, data.length?'ok':'warn');
   if (!data.length) throw new Error('Address not found. Try adding a postcode, e.g. "24 High St, London, E1 6RF".');
@@ -844,12 +858,12 @@ function sunBearingFromPos(pos) {
 function calcSunHoursForDate(lat, lng, gardenBearing, date) {
   let minutes = 0;
   const d = new Date(date); d.setHours(0,0,0,0);
-  for (let m = 0; m < 1440; m += 2) {
+  for (let m = 0; m < 1440; m += 15) {
     const t = new Date(d.getTime() + m * 60000);
     const pos = SunCalc.getPosition(t, lat, lng);
     if (pos.altitude <= 0.01) continue;
     const sb = sunBearingFromPos(pos);
-    if (angleDiff(gardenBearing, sb) < 90) minutes += 2;
+    if (angleDiff(gardenBearing, sb) < 90) minutes += 15;
   }
   return Math.round(minutes / 60 * 10) / 10;
 }
@@ -888,7 +902,7 @@ function getSunStatusAtMinute(lat, lng, gardenBearing, minuteOfDay) {
 
 function buildSunPanelHTML(sunData, propId) {
   const { todayHrs, summerHrs, winterHrs, sunrise, sunset } = sunData;
-  const nowMin = new Date().getHours()*60 + new Date().getMinutes();
+  const _now = new Date(); const nowMin = _now.getHours()*60 + _now.getMinutes();
   const status = getSunStatusAtMinute(sunData.lat, sunData.lng, sunData.gardenBearing, nowMin);
   const statusLabel = status==='in' ? '☀️ Sun in garden now' : status==='out' ? '🌤 Sun not in garden now' : '🌙 Sun has set';
   const statusCls = status==='in' ? 'in' : status==='out' ? 'out' : 'set';
@@ -956,7 +970,8 @@ function saveProps() { localStorage.setItem('iisf4_props', JSON.stringify(props)
 function addLoader(id, addr) {
   const d=document.createElement('div');
   d.id=id; d.className='loading-card';
-  d.innerHTML=`<div class="spinner"></div><div class="loading-text">Analysing <strong>${addr}</strong>…</div>`;
+  d.innerHTML='<div class="spinner"></div><div class="loading-text">Analysing <strong></strong>…</div>';
+  d.querySelector('strong').textContent=addr;
   document.getElementById('results').prepend(d);
 }
 function rmLoader(id) { document.getElementById(id)?.remove(); }
@@ -966,7 +981,19 @@ function setFilter(f,btn) {
   document.querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active'); render();
 }
-function clearAll() { if(!confirm('Remove all saved properties?')) return; props=[]; saveProps(); render(); }
+let _clearPending=false, _clearTimer=null;
+function clearAll() {
+  const btn=document.querySelector('.clear-btn');
+  if (!_clearPending) {
+    _clearPending=true;
+    btn.textContent='Confirm clear?'; btn.style.color='var(--red)';
+    _clearTimer=setTimeout(()=>{ _clearPending=false; btn.textContent='Clear all'; btn.style.color=''; },3000);
+    return;
+  }
+  clearTimeout(_clearTimer); _clearPending=false;
+  btn.textContent='Clear all'; btn.style.color='';
+  props=[]; saveProps(); render();
+}
 function delProp(id) { props=props.filter(p=>p.id!==id); saveProps(); render(); }
 
 function render() {
@@ -980,7 +1007,7 @@ function render() {
 
   let list=props;
   if (activeFilter==='south') list=props.filter(p=>p.south===true);
-  if (activeFilter==='not')   list=props.filter(p=>p.south!==true);
+  if (activeFilter==='not')   list=props.filter(p=>p.south===false);
 
   results.querySelectorAll('.result-card,.empty-state').forEach(e=>e.remove());
 
