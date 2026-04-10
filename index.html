@@ -251,11 +251,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Figtree', sans-s
 input[type=range].sun-slider { width: 100%; height: 4px; border-radius: 2px; outline: none; border: none; -webkit-appearance: none; background: linear-gradient(to right, var(--sun) var(--pct,50%), var(--border) var(--pct,50%)); cursor: pointer; }
 input[type=range].sun-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--sun); border: 3px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
 .sun-caveat { font-size: 11px; color: var(--muted2); margin-top: 10px; line-height: 1.5; }
-/* Sun path arc on map */
-.sun-arc-legend { display: flex; gap: 12px; margin-top: 6px; flex-wrap: wrap; }
-.sun-arc-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
-
-
 
 /* ── SEO CONTENT ── */
 .seo-section { max-width: 560px; margin: 0 auto; padding: 0 20px 60px; }
@@ -345,14 +340,6 @@ footer { background: var(--hero-bg); padding: 28px 20px; text-align: center; }
         <div class="legend-item"><div class="legend-dot back"></div>Back (garden)</div>
       </div>
       <span id="mapCoords"></span>
-    </div>
-      <div class="shade-row">
-        <span class="shade-time-display" id="shadeTime">12:00</span>
-        <input type="range" class="shade-slider" id="shadeSlider" min="0" max="1439" value="720"
-          style="--shade-pct:50%" oninput="onShadeSlider(this)">
-        <span class="shade-status-pill sun-out" id="shadeStatus">—</span>
-      </div>
-      <div class="shade-hint">Shadow shown assumes no neighbouring buildings or trees</div>
     </div>
   </div>
 </div>
@@ -1039,6 +1026,7 @@ function render() {
         <div class="card-note">${note}</div>
         ${methodLabel?`<div class="method-tag">${methodLabel}</div>`:''}
       </div>
+      ${p.sunData ? buildSunPanelHTML(p.sunData, p.id) : ''}
       <div class="card-footer">
         <div class="conf-tag"><div class="conf-dot ${p.confidence}"></div>${p.confidence} accuracy</div>
         <button class="del-btn" onclick="delProp(${p.id})" title="Remove">✕</button>
