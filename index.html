@@ -127,6 +127,10 @@ body { background: var(--bg); color: var(--text); font-family: 'Figtree', sans-s
 .hero-btn:hover { opacity: 0.9; }
 .hero-btn:active { transform: scale(0.97); }
 .hero-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+.location-btn { background: none; border: 1.5px solid rgba(255,255,255,0.13); color: rgba(255,255,255,0.55); font-family: 'Figtree', sans-serif; font-size: 14px; font-weight: 500; padding: 11px 18px; border-radius: 14px; cursor: pointer; width: 100%; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: border-color 0.2s, color 0.2s, background 0.2s; touch-action: manipulation; }
+.location-btn:hover { border-color: rgba(255,255,255,0.28); color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.05); }
+.location-btn:active { transform: scale(0.98); }
+.location-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
 .hero-hint { font-size: 12px; color: rgba(255,255,255,0.25); display: flex; align-items: center; gap: 6px; }
 .hero-hint::before { content: ''; width: 3px; height: 3px; background: var(--sun); border-radius: 50%; opacity: 0.7; flex-shrink: 0; }
 
@@ -290,6 +294,10 @@ footer { background: var(--hero-bg); padding: 28px 20px; text-align: center; }
         <span>🔍</span> Find
       </button>
     </div>
+    <button class="location-btn" id="locationBtn" onclick="useCurrentLocation()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="9" opacity=".25"/></svg>
+      Use my current location
+    </button>
     <p class="hero-hint">Include a postcode for best results — or drop a pin directly on the map</p>
     <div class="debug-log" id="debugLog"></div>
   </div>
@@ -753,6 +761,73 @@ async function startGeocode() {
 
   btn.disabled = false;
   btn.innerHTML = '<span>🔍</span> Find';
+}
+
+// ── Use device GPS location ────────────────────────────────────
+function useCurrentLocation() {
+  if (!navigator.geolocation) {
+    toast('Geolocation is not supported by your browser.', 'err');
+    return;
+  }
+
+  const btn = document.getElementById('locationBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Getting location…';
+  logLines = []; logEl.innerHTML = ''; logEl.className = 'debug-log show';
+  log('Requesting device location…');
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      log(`📍 Got coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}`, 'ok');
+      log('Reverse geocoding…');
+
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
+        );
+        const data = await res.json();
+        pendingAddress = data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      } catch {
+        pendingAddress = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      }
+
+      document.getElementById('addrInput').value = pendingAddress;
+      pendingLat = lat;
+      pendingLng = lng;
+
+      document.getElementById('mapSection').className = 'map-section show';
+      initMap(lat, lng);
+
+      setTimeout(() => {
+        leafletMap.invalidateSize();
+        document.getElementById('mapSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 120);
+
+      log('📍 Pin placed — confirm or drag to adjust, then tap Analyse', 'ok');
+      document.getElementById('mapSubtitle').textContent = 'Drag the pin if needed, then analyse';
+
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="9" opacity=".25"/></svg> Use my current location';
+    },
+    (error) => {
+      let msg = 'Could not get your location.';
+      if (error.code === error.PERMISSION_DENIED)
+        msg = 'Location access was denied. Please allow it in your browser settings.';
+      else if (error.code === error.POSITION_UNAVAILABLE)
+        msg = 'Location information is unavailable.';
+      else if (error.code === error.TIMEOUT)
+        msg = 'Location request timed out.';
+
+      log('❌ ' + msg, 'err');
+      toast(msg, 'err');
+
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="9" opacity=".25"/></svg> Use my current location';
+    },
+    { timeout: 10000, maximumAge: 60000 }
+  );
 }
 
 // ── Step 2: Analyse from pin ──────────────────────────────────
