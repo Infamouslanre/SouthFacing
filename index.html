@@ -401,8 +401,13 @@ async function geocode(address) {
   const q = encodeURIComponent(address.toLowerCase().includes('uk') ? address : address+', UK');
   log('Geocoding…');
   let res, data;
-  try { res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=3&countrycodes=gb&addressdetails=1`); }
-  catch { throw new Error('Cannot reach geocoding service. Check your internet connection.'); }
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 10000);
+    res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=3&countrycodes=gb&addressdetails=1`, { signal: ctrl.signal });
+    clearTimeout(t);
+  }
+  catch(e) { throw new Error(e.name === 'AbortError' ? 'Geocoding timed out. Please try again.' : 'Cannot reach geocoding service. Check your internet connection.'); }
   if (!res.ok) throw new Error(`Geocoding failed — HTTP ${res.status}`);
   try { data = await res.json(); } catch { throw new Error('Unexpected geocoding response.'); }
   log(`${data.length} result(s)`, data.length?'ok':'warn');
@@ -784,9 +789,13 @@ function useCurrentLocation() {
       log('Reverse geocoding…');
 
       try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 10000);
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+          { signal: ctrl.signal }
         );
+        clearTimeout(t);
         const data = await res.json();
         pendingAddress = data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
       } catch {
